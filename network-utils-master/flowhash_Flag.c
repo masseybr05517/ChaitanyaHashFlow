@@ -52,16 +52,6 @@ static uint32_t fnv1a_32(const char *s)
     return h;
 }
 
-/* ---------- more efficient hash_key generator ---------- */
-static uint32_t hash_key(const flow_key_t *k) {
-    const uint8_t *data = (const uint8_t*)k;
-    uint32_t h = 0x811c9dc5u;
-    for (size_t i = 0; i < sizeof(flow_key_t); i++) {
-        h ^= data[i];
-        h *= 0x01000193u;
-    }
-    return h;
-}
 
 /* ---------- flow key & entry ---------- */
 typedef struct {
@@ -87,6 +77,17 @@ typedef struct {
     struct timeval last_seen;
 } flow_entry_t;
 
+
+/* ---------- more efficient hash_key generator ---------- */
+static uint32_t hash_key(const flow_key_t *k) {
+    const uint8_t *data = (const uint8_t*)k;
+    uint32_t h = 0x811c9dc5u;
+    for (size_t i = 0; i < sizeof(flow_key_t); i++) {
+        h ^= data[i];
+        h *= 0x01000193u;
+    }
+    return h;
+}
 /* global variables for dynamic table */
 static flow_entry_t *table = NULL;
 
@@ -355,15 +356,13 @@ static int parse_and_track(const struct pcap_pkthdr *h, const u_char *pkt, int a
 /* --------------------- main ----------------------------- */
 int main(int argc, char **argv)
 {   
+    int action_flag = 0;
     if (argc == 3) {
         int action_flag = atoi(argv[2]); //Expects PCAP file path and an integer for the action.
     }
     else if (argc != 2) {
         fprintf(stderr, "usage: %s <file.pcap>\n", argv[0]);
         return 1;
-    }
-    if (argc != 3) {
-        int action_flag = 0; //Default to FCFS
     }
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *pc = pcap_open_offline(argv[1], errbuf);
